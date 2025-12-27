@@ -1,6 +1,7 @@
 package com.example.UberBooking_Service.services;
 
 import com.example.UberBooking_Service.apis.LocationServiceApi;
+import com.example.UberBooking_Service.apis.UberSocketApi;
 import com.example.UberBooking_Service.dto.*;
 import com.example.UberBooking_Service.repositories.BookingRepository;
 import com.example.UberBooking_Service.repositories.DriverRepository;
@@ -26,15 +27,17 @@ public class BookingServiceImpl implements BookingService{
     private final PassengerRepository passengerRepository;
     private final DriverRepository driverRepository;
     private final RestTemplate restTemplate;
+    private final UberSocketApi uberSocketApi;
     private static final String LOCATION_SERVICE="http://localhost:7777";
     private final LocationServiceApi locationServiceApi;
 
-    public BookingServiceImpl(BookingRepository bookingRepository, PassengerRepository passengerRepository,LocationServiceApi locationServiceApi,DriverRepository driverRepository){
+    public BookingServiceImpl(BookingRepository bookingRepository, PassengerRepository passengerRepository,LocationServiceApi locationServiceApi,DriverRepository driverRepository,UberSocketApi uberSocketApi){
         this.bookingRepository=bookingRepository;
         this.passengerRepository=passengerRepository;
         this.restTemplate=new RestTemplate();
         this.locationServiceApi=locationServiceApi;
         this.driverRepository=driverRepository;
+        this.uberSocketApi=uberSocketApi;
     }
 
     @Override
@@ -56,7 +59,7 @@ public class BookingServiceImpl implements BookingService{
                 .longitude(bookingDetails.getStartLocation().getLongitude())
                 .build();
 
-        processNearbyDriversAsync(request);
+        processNearbyDriversAsync(request,bookingDetails.getPassengerId());
 //
 //       ResponseEntity<DriverLocationDto[]> result= restTemplate.postForEntity(LOCATION_SERVICE+"/api/v1/location/nearby/drivers",request,DriverLocationDto[].class);
 //
@@ -89,7 +92,7 @@ public class BookingServiceImpl implements BookingService{
                 .build();
     }
 
-    private void processNearbyDriversAsync(NearbyDriversRequestDto requestDto){
+    private void processNearbyDriversAsync(NearbyDriversRequestDto requestDto,Long passengerId){
         Call<DriverLocationDto[]> call=locationServiceApi.getNearbyDrivers(requestDto);
         call.enqueue(new Callback<DriverLocationDto[]>() {
             @Override
@@ -99,6 +102,8 @@ public class BookingServiceImpl implements BookingService{
                     driverLocations.forEach(driverLocationDto -> {
                         System.out.println(driverLocationDto.getDriverId() + " " + "lat: " + driverLocationDto.getLatitude() + "long: " + driverLocationDto.getLongitude());
                     });
+
+                    raiseRideRequestAsync(RideRequestDto.builder().passengerId(passengerId).build());
                 }else{
                     System.out.println("Request failed" + response.message());
                 }
@@ -106,6 +111,26 @@ public class BookingServiceImpl implements BookingService{
 
             @Override
             public void onFailure(Call<DriverLocationDto[]> call, Throwable throwable) {
+                throwable.printStackTrace();
+            }
+        });
+    }
+
+    private void raiseRideRequestAsync(RideRequestDto requestDto){
+        Call<Boolean> call=uberSocketApi.getNearbyDrivers(requestDto);
+        call.enqueue(new Callback<Boolean>() {
+            @Override
+            public void onResponse(Call<Boolean> call, Response<Boolean> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Boolean result = response.body();
+                    System.out.println("Driver response is " + result.toString());
+                }else{
+                    System.out.println("Request failed" + response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Boolean> call, Throwable throwable) {
                 throwable.printStackTrace();
             }
         });
