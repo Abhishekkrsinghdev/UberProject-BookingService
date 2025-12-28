@@ -9,5 +9,5 @@ import retrofit2.http.POST;
 
 public interface UberSocketApi {
     @POST("/api/socket/newride")
-    Call<Boolean> getNearbyDrivers(@Body RideRequestDto requestDto);
+    Call<Boolean> raiseRideRequest(@Body RideRequestDto requestDto);
 }

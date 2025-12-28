@@ -12,5 +12,5 @@ import java.util.Optional;
 @AllArgsConstructor
 public class UpdateBookingRequestDto {
     private BookingStatus status;
-    private Optional<Long> driverId;
+    private Long driverId;
 }
