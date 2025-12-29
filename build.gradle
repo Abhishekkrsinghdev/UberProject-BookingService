@@ -32,6 +32,7 @@ dependencies {
     implementation 'com.squareup.retrofit2:retrofit:2.10.0' // Core Retrofit library
     implementation 'com.squareup.retrofit2:converter-jackson:2.11.0' // Converter for JSON (using Gson)
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:5.0.0'
+    implementation 'org.springframework.kafka:spring-kafka:4.0.1'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'

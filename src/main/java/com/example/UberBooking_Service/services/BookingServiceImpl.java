@@ -87,9 +87,13 @@ public class BookingServiceImpl implements BookingService{
         Driver driver = driverRepository.findById(driverId)
                 .orElseThrow(() -> new RuntimeException("Driver not found"));
 
+       //Todo: Update the booking only if driver is available
+
         booking.setBookingStatus(bookingRequestDto.getStatus());
         booking.setDriver(driver);
         bookingRepository.save(booking);
+
+        //Todo: also make drive unavailable as he/she accepted the booking
 
         return UpdateBookingResponseDto.builder()
                 .bookingId(booking.getId())
