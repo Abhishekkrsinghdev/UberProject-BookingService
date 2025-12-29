@@ -78,24 +78,23 @@ public class BookingServiceImpl implements BookingService{
 
     @Override
     public UpdateBookingResponseDto updateBooking(UpdateBookingRequestDto bookingRequestDto, Long bookingId) {
-        // 1. Find the booking safely
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
 
-        // 2. Find the driver safely (Checking the Optional in the DTO first)
-        Long driverId = bookingRequestDto.getDriverId();
+        // Note: Use .orElse(null) or .isPresent() instead of .get() directly to avoid NoSuchElementException
+        Long driverId = bookingRequestDto.getDriverId().orElseThrow(() -> new RuntimeException("Driver ID missing"));
+
         Driver driver = driverRepository.findById(driverId)
                 .orElseThrow(() -> new RuntimeException("Driver not found"));
 
-        // 3. Update the object (JPA will sync this to DB automatically)
         booking.setBookingStatus(bookingRequestDto.getStatus());
         booking.setDriver(driver);
         bookingRepository.save(booking);
 
         return UpdateBookingResponseDto.builder()
-                .bookingId(bookingId)
+                .bookingId(booking.getId())
                 .status(booking.getBookingStatus())
-                .driver(Optional.ofNullable(booking.getDriver()))
+                .driverId(booking.getDriver().getId()) // Just return the ID
                 .build();
     }
 
